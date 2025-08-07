@@ -13,6 +13,8 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.techinterviewproject.FakeCredentialsProvider
+import com.example.techinterviewproject.FakeImageUrlsProvider
 import com.example.techinterviewproject.R
 import java.io.InputStream
 import java.net.HttpURLConnection
@@ -42,31 +44,19 @@ class LoginActivity : AppCompatActivity() {
             val email = emailEditText.text.toString()
             val password = passwordEditText.text.toString()
 
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Email and password must not be empty", Toast.LENGTH_SHORT)
-                    .show()
-                return@setOnClickListener
-            }
-
-            progressBar.visibility = View.VISIBLE
 
             Thread {
-                Thread.sleep(2000) // simulate network delay
-
-                runOnUiThread {
-                    progressBar.visibility = View.GONE
-                    loginForm.visibility = View.GONE
-                    if (email == "a@a.com" && password == "a") {
+                val credentials = FakeCredentialsProvider.getCreds()
+                progressBar.visibility = View.GONE
+                if (email == credentials.email && password == credentials.password) {
                         Toast.makeText(this, "Login success", Toast.LENGTH_SHORT).show()
                         // Simulate image download after login
+                    loginForm.visibility = View.GONE
                         downloadImages()
                     } else {
                         Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show()
                     }
-
-
-                }
-            }.start()
+                }.start()
         }
     }
 
@@ -75,13 +65,7 @@ class LoginActivity : AppCompatActivity() {
         imagesContainer.removeAllViews()
 
         Thread {
-            Thread.sleep(2000) // simulate image loading
-
-            val imageUrls = listOf(
-                "https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg",
-                "https://images.pexels.com/photos/13268478/pexels-photo-13268478.jpeg",
-                "https://images.pexels.com/photos/1000498/pexels-photo-1000498.jpeg"
-            )
+            val imageUrls = FakeImageUrlsProvider.getUrls()
 
             runOnUiThread {
                 progressBar.visibility = View.GONE
