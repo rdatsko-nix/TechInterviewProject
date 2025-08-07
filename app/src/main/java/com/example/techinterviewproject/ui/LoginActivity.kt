@@ -1,4 +1,4 @@
-package com.example.techinterviewproject
+package com.example.techinterviewproject.ui
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -13,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.techinterviewproject.R
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -109,27 +110,26 @@ class LoginActivity : AppCompatActivity() {
         }.start()
     }
 
-}
 
-private class ImageDownloadTask(val callback: (Bitmap?) -> Unit) :
-    AsyncTask<String, Void, Bitmap?>() {
-    override fun doInBackground(vararg params: String): Bitmap? {
-        val urlStr = params[0]
-        return try {
-            val url = URL(urlStr)
-            val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
-            connection.doInput = true
-            connection.connect()
-            val input: InputStream = connection.inputStream
-            BitmapFactory.decodeStream(input)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+    private class ImageDownloadTask(val callback: (Bitmap?) -> Unit) :
+        AsyncTask<String, Void, Bitmap?>() {
+        override fun doInBackground(vararg params: String): Bitmap? {
+            val urlStr = params[0]
+            return try {
+                val url = URL(urlStr)
+                val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
+                connection.doInput = true
+                connection.connect()
+                val input: InputStream = connection.inputStream
+                BitmapFactory.decodeStream(input)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
         }
-    }
 
-    override fun onPostExecute(result: Bitmap?) {
-        super.onPostExecute(result)
-        callback(result)
-    }
-}
+        override fun onPostExecute(result: Bitmap?) {
+            super.onPostExecute(result)
+            callback(result)
+        }
+    }}

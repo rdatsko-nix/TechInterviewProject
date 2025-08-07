@@ -14,11 +14,7 @@
         android:theme="@style/Theme.TechInterviewProject"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.TechInterviewProject" />
-        <activity
-            android:name="LoginActivity"
+            android:name=".ui.LoginActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:exported="true">
             <intent-filter>
