@@ -1,15 +1,5 @@
 package com.example.techinterviewproject
 
-data class Credentials(val email: String = "a@a.com", val password: String = "a")
-
-object FakeCredentialsProvider {
-
-    fun getCreds(): Credentials {
-        Thread.sleep(2000)
-        return Credentials()
-    }
-}
-
 object FakeImageUrlsProvider {
 
     fun getUrls(): List<String> {

@@ -11,23 +11,23 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.techinterviewproject.FakeCredentialsProvider
-import com.example.techinterviewproject.FakeImageUrlsProvider
 import com.example.techinterviewproject.R
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
 class LoginActivity : AppCompatActivity() {
-
     private lateinit var emailEditText: EditText
     private lateinit var passwordEditText: EditText
     private lateinit var loginButton: Button
     private lateinit var progressBar: ProgressBar
     private lateinit var imagesContainer: LinearLayout
     private lateinit var loginForm: LinearLayout
+
+    private val prefs by lazy { getSharedPreferences("auth_prefs", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,23 +40,30 @@ class LoginActivity : AppCompatActivity() {
         imagesContainer = findViewById(R.id.imagesContainer)
         loginForm = findViewById(R.id.loginForm)
 
+        val savedEmail = prefs.getString("email", null)
+        val savedPass = prefs.getString("password", null)
+
+        if (!savedEmail.isNullOrEmpty() && !savedPass.isNullOrEmpty()) {
+            emailEditText.setText(savedEmail)
+            passwordEditText.setText(savedPass)
+
+            loginForm.visibility = View.GONE
+            downloadImages()
+        }
+
         loginButton.setOnClickListener {
             val email = emailEditText.text.toString()
             val password = passwordEditText.text.toString()
 
+            progressBar.visibility = View.VISIBLE
+            prefs.edit()
+                .putString("email", email)
+                .putString("password", password)
+                .apply()
 
-            Thread {
-                val credentials = FakeCredentialsProvider.getCreds()
-                progressBar.visibility = View.GONE
-                if (email == credentials.email && password == credentials.password) {
-                        Toast.makeText(this, "Login success", Toast.LENGTH_SHORT).show()
-                        // Simulate image download after login
-                    loginForm.visibility = View.GONE
-                        downloadImages()
-                    } else {
-                        Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show()
-                    }
-                }.start()
+            Toast.makeText(this, "Login success", Toast.LENGTH_SHORT).show()
+            loginForm.visibility = View.GONE
+            downloadImages()
         }
     }
 
@@ -65,32 +72,51 @@ class LoginActivity : AppCompatActivity() {
         imagesContainer.removeAllViews()
 
         Thread {
-            val imageUrls = FakeImageUrlsProvider.getUrls()
+            val items1: List<ImageItem> = FakeImageApi.fetchImages(FakeImageApi.fakeJsonFile1())
+            val items2: List<ImageItem> = FakeImageApi.fetchImages(FakeImageApi.fakeJsonFile2())
 
-            runOnUiThread {
-                progressBar.visibility = View.GONE
-
-                for (url in imageUrls) {
+            val items = items1 + items2
+                for (item in items) {
                     ImageDownloadTask { bitmap ->
                         if (bitmap != null) {
-                            val imageView = ImageView(this).apply {
-                                setImageBitmap(bitmap)
+                            val itemContainer = LinearLayout(this).apply {
+                                orientation = LinearLayout.VERTICAL
                                 val params = LinearLayout.LayoutParams(
                                     LinearLayout.LayoutParams.MATCH_PARENT,
-                                    600
+                                    LinearLayout.LayoutParams.WRAP_CONTENT
                                 )
                                 params.setMargins(0, 16, 0, 16)
                                 layoutParams = params
+                            }
+
+                            val imageView = ImageView(this).apply {
+                                setImageBitmap(bitmap)
+                                layoutParams = LinearLayout.LayoutParams(
+                                    LinearLayout.LayoutParams.MATCH_PARENT,
+                                    600
+                                )
                                 scaleType = ImageView.ScaleType.CENTER_CROP
                             }
-                            imagesContainer.addView(imageView)
+
+                            val titleView = TextView(this).apply {
+                                text = item.name
+                                layoutParams = LinearLayout.LayoutParams(
+                                    LinearLayout.LayoutParams.MATCH_PARENT,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT
+                                )
+                                textSize = 16f
+                            }
+
+                            itemContainer.addView(imageView)
+                            itemContainer.addView(titleView)
+                            imagesContainer.addView(itemContainer)
                         } else {
-                            Log.e("LoginActivity", "Failed to download image from $url")
+                            Log.e("LoginActivity", "Failed to download image from ${item.url}")
                         }
-                    }.execute(url)
+                    }.execute(item.url)
                 }
-                Toast.makeText(this, "Images downloaded", Toast.LENGTH_SHORT).show()
-            }
+                progressBar.visibility = View.GONE
+
         }.start()
     }
 
@@ -111,9 +137,8 @@ class LoginActivity : AppCompatActivity() {
                 null
             }
         }
-
         override fun onPostExecute(result: Bitmap?) {
-            super.onPostExecute(result)
             callback(result)
         }
-    }}
+    }
+}
